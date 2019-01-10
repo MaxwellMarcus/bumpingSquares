@@ -39,9 +39,15 @@ class Ball:
 
 
 class Paddle:
-    def __init__(self,x):
+    def __init__(self,x,inputs):
         self.position = [x,250]
+        if inputs == 'arrows':
+            root.bind('Up',movePaddleUp)
+            root.bind('Down',movePaddleUp)
+    def movePaddle()
+        pass
 ball = Ball()
+paddle = Paddle(50,'arrows')
 while True:
     ball.update()
     root.update()
