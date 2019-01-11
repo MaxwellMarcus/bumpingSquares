@@ -41,13 +41,21 @@ class Ball:
 class Paddle:
     def __init__(self,x,inputs):
         self.position = [x,250]
+        self.paddle = canvas.create_rectangle(self.position[0],self.position[1]+50,self.position[0]-5,self.position[1]-50)
         if inputs == 'arrows':
-            root.bind('Up',movePaddleUp)
-            root.bind('Down',movePaddleUp)
-    def movePaddle()
-        pass
+            root.bind('Up',self.movePaddleUp)
+            root.bind('Down',self.movePaddleDown)
+    def movePaddleUp(self,event):
+        self.position[1] -= 2
+    def movePaddleDown(self,event):
+        self.position[1] += 2
+    def render(self):
+        canvas.delete(self.paddle)
+        self.paddle = canvas.create_rectangle(self.position[0],self.position[1]+50,self.position[0]-5,self.position[1]-50,fill='white')
+
 ball = Ball()
 paddle = Paddle(50,'arrows')
 while True:
     ball.update()
+    paddle.render()
     root.update()
