@@ -56,6 +56,8 @@ class Ball:
     def update(self):# this fuction will render the ball and update it's position and velocity
         self.updateVelocity()
         self.updatePosition()
+        self.paddle1.movePos()
+        self.paddle2.movePos()
         self.render()
 
 
@@ -65,18 +67,30 @@ class Paddle:
         self.paddle = canvas.create_rectangle(self.position[0],self.position[1]+50,self.position[0]-5,self.position[1]-50)
         self.scoreText = canvas.create_text(0,0)
         self.score = 0
-        if inputs == 'arrows':
-            root.bind('<Up>',self.movePaddleUp)
-            root.bind('<Down>',self.movePaddleDown)
-        if inputs == 'ws':
-            root.bind('w',self.movePaddleUp)
-            root.bind('s',self.movePaddleDown)
-    def movePaddleUp(self,event):
-        if self.position[1] > 20:
-            self.position[1] -= 10
-    def movePaddleDown(self,event):
-        if self.position[1] < 480:
-            self.position[1] += 10
+        self.move = 0
+        self.input = input
+        root.bind('<KeyPress>',self.startMove)
+        root.bind('<KeyRelease>',self.stopMove)
+    def startMove(self,event):
+        if self.position[1] > 20 and event.keysym == 'Up' and self.input == 'arrows':
+            self.move = -10
+        if self.position[1] < 480 and event.keysym == 'Down' and self.input == 'arrows':
+            self.move = 10
+        if self.position[1] > 20 and event.keysym == 'w' and self.input == 'ws':
+            self.move = -10
+        if self.position[1] < 480 and event.keysym == 's' and self.input == 'ws':
+            self.move = 10
+    def stopMove(self,event):
+        if self.position[1] > 20 and event.keysym == 'Up' and self.input == 'arrows':
+            self.move = 0
+        if self.position[1] < 480 and event.keysym == 'Down' and self.input == 'arrows':
+            self.move = 0
+        if self.position[1] > 20 and event.keysym == 'w' and self.input == 'ws':
+            self.move = 0
+        if self.position[1] < 480 and event.keysym == 's' and self.input == 'ws':
+            self.move = 0
+    def movePos(self):
+        self.position[1] += self.move
     def render(self):
         global start
         canvas.delete(self.paddle)
