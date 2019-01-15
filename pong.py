@@ -11,14 +11,14 @@ canvas.pack()
 class Ball:
     def __init__(self):
         self.acceleration = [0,0]#this probably won't be used much but it is good to add one in any way
-        self.velocity = [random.randint(-6,6)/10,random.randint(-6,6)/10]# this will keep track of the speed in x and y
+        self.velocity = [random.randint(-6,6)/5,random.randint(-6,6)/5]# this will keep track of the speed in x and y
         while abs(self.velocity[1]) < .04 or abs(self.velocity[0]) < .04:
-            self.velocity = [random.randint(-6,6)/10,random.randint(-6,6)/10]
+            self.velocity = [random.randint(-6,6)/5,random.randint(-6,6)/5]
         self.position = [500,250]# this will keep track of the x and y position
         self.ball = canvas.create_rectangle(0,0,0,0)
         self.line = canvas.create_line(500,0,500,500,width=5,fill='white')
         self.paddle1 = Paddle(50,'ws')
-        self.paddle2 = Paddle(950,'arrows')
+        self.paddle2 = AIPaddle(950)
         self.pause = True
     def updateVelocity(self):
         self.velocity[0] += self.acceleration[0]
@@ -38,15 +38,15 @@ class Ball:
                 self.paddle2.score += 1
             else:
                 self.paddle1.score += 1
-            self.pause = True
+            #self.pause = True
             self.position = [500,250]
             self.paddle1.position[1] = 250
             self.paddle2.position[1] = 250
             self.paddle1.render()
             self.paddle2.render()
-            self.velocity = [random.randint(-6,6)/10,random.randint(-6,6)/10]
+            self.velocity = [random.randint(-6,6)/5,random.randint(-6,6)/5]
             while abs(self.velocity[1]) < .04 or abs(self.velocity[0]) < .04:
-                self.velocity = [random.randint(-6,6)/10,random.randint(-6,6)/10]
+                self.velocity = [random.randint(-6,6)/5,random.randint(-6,6)/5]
     def render(self):
         canvas.delete(self.ball)
         canvas.delete(self.line)
@@ -68,18 +68,19 @@ class Paddle:
         self.scoreText = canvas.create_text(0,0)
         self.score = 0
         self.move = 0
-        self.input = input
-        root.bind('<KeyPress>',self.startMove)
-        root.bind('<KeyRelease>',self.stopMove)
+        self.speed = 5
+        self.input = inputs
+        root.bind('<KeyPress>',self.startMove,add='+')
+        root.bind('<KeyRelease>',self.stopMove,add='+')
     def startMove(self,event):
         if self.position[1] > 20 and event.keysym == 'Up' and self.input == 'arrows':
-            self.move = -10
+            self.move = -self.speed
         if self.position[1] < 480 and event.keysym == 'Down' and self.input == 'arrows':
-            self.move = 10
+            self.move = self.speed
         if self.position[1] > 20 and event.keysym == 'w' and self.input == 'ws':
-            self.move = -10
+            self.move = -self.speed
         if self.position[1] < 480 and event.keysym == 's' and self.input == 'ws':
-            self.move = 10
+            self.move = self.speed
     def stopMove(self,event):
         if self.position[1] > 20 and event.keysym == 'Up' and self.input == 'arrows':
             self.move = 0
@@ -91,6 +92,10 @@ class Paddle:
             self.move = 0
     def movePos(self):
         self.position[1] += self.move
+        if self.position[1] < 20:
+            self.move = 0
+        elif self.position[1] > 480:
+            self.move = 0
     def render(self):
         global start
         canvas.delete(self.paddle)
@@ -101,8 +106,43 @@ class Paddle:
                 self.scoreText = canvas.create_text(self.position[0]-200,50,text=str(self.score),fill='white',font=('TkTextFont',100))
             else:
                 self.scoreText = canvas.create_text(self.position[0]+200,50,text=str(self.score),fill='white',font=('TkTextFont',100))
-
-
+class AIPaddle:
+    def __init__(self,x):
+        self.position = [x,250]
+        self.paddle = canvas.create_rectangle(self.position[0],self.position[1]+50,self.position[0]-5,self.position[1]-50)
+        self.scoreText = canvas.create_text(0,0)
+        self.score = 0
+        self.move = 0
+        self.speed = 3
+        self.hitsLeft = 0
+        self.hitKind = None
+    def movePos(self):
+        if self.hitsLeft == 0:
+            distance = (abs(ball.position[0]-self.position[0])//20)*5
+            if distance < 3:
+                distance = 3
+            if ball.position[1]//distance < self.position[1]//distance:
+                self.hitsLeft += random.randint(1,25)
+                self.hitKind = 'down'
+            elif ball.position[1]//distance > self.position[1]//distance:
+                self.hitsLeft += random.randint(1,25)
+                self.hitKind = 'up'
+        else:
+            if self.hitKind == 'up':
+                self.position[1] += self.speed
+            else:
+                self.position[1] -= self.speed
+            self.hitsLeft -= 1
+    def render(self):
+        global start
+        canvas.delete(self.paddle)
+        canvas.delete(self.scoreText)
+        self.paddle = canvas.create_rectangle(self.position[0],self.position[1]+20,self.position[0]-10,self.position[1]-20,fill='white')
+        if start:
+            if self.position[0]  > 500:
+                self.scoreText = canvas.create_text(self.position[0]-200,50,text=str(self.score),fill='white',font=('TkTextFont',100))
+            else:
+                self.scoreText = canvas.create_text(self.position[0]+200,50,text=str(self.score),fill='white',font=('TkTextFont',100))
 ball = Ball()
 game = True
 start = False
@@ -130,7 +170,7 @@ def startScreen():
     ball.paddle2.render()
     root.update()
 
-root.bind('<KeyPress>',keyPress)
+root.bind('<KeyPress>',keyPress,add='+')
 
 ball.update()
 ball.paddle1.render()
