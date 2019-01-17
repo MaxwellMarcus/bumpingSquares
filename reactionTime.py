@@ -9,6 +9,8 @@ root = Tk()
 canvas = Canvas(root,width = 1000,height = 500,background = "black")
 canvas.pack()
 
+f = open('reactionTimes','a')
+
 def hit(event):
     global hitted,game
     if not event.keysym == 'Escape':
@@ -25,7 +27,7 @@ best = 100000000
 worst = 0
 print('hit a key when you see the box, try to get the fastest possible time')
 while game:
-    if not going and random.randint(1,100000) == 37:
+    if not going and random.randint(1,10000) == 37:
         canvas.create_rectangle(480,230,520,270,fill='white')
         going = True
         timer = time.time()
@@ -45,8 +47,10 @@ while game:
     root.update()
 avg = 0
 for i in times:
+    f.write(str(i)+'\n')
     avg += i
 avg /= len(times)
+f.close()
 print('your average time was ' + str(avg) + ', nice job!')
 print('your best time was ' + str(best) + '!')
 print('your worst time was ' + str(worst))
