@@ -3,6 +3,7 @@ try:
 except:
     from Tkinter import *
 import random
+from time import *
 
 root = Tk()
 canvas = Canvas(root,width = 1000,height = 500,background = "black")
@@ -20,16 +21,21 @@ class Ball:
         self.paddle1 = Paddle(50,'ws')
         self.paddle2 = AIPaddle(950)
         self.pause = True
+        self.speedMultiplier = 1
     def updateVelocity(self):
         self.velocity[0] += self.acceleration[0]
         self.velocity[1] += self.acceleration[1]
 
     def updatePosition(self):
-        self.position[0] += self.velocity[0]
-        self.position[1] += self.velocity[1]
+        self.position[0] += self.velocity[0]*ball.speedMultiplier
+        self.position[1] += self.velocity[1]*ball.speedMultiplier
 
-        if (abs(self.position[0]-self.paddle1.position[0])<6 and self.position[1] < self.paddle1.position[1]+20 and self.position[1] > self.paddle1.position[1]-20) or (abs(self.position[0]-self.paddle2.position[0])<6 and self.position[1] < self.paddle2.position[1]+20 and self.position[1] > self.paddle2.position[1]-20):
-            self.velocity[0] = -self.velocity[0]*(random.randint(8,25)/10)
+        if (abs(self.position[0]-self.paddle1.position[0])<6 and self.position[1] < self.paddle1.position[1]+20 and self.position[1] > self.paddle1.position[1]-20):
+            print(abs(self.velocity[0]))
+            self.velocity[0] = abs(self.velocity[0]*(random.randint(8,25)/10))
+            print(self.velocity[0])
+        if (abs(self.position[0]-self.paddle2.position[0])<6 and self.position[1] < self.paddle2.position[1]+20 and self.position[1] > self.paddle2.position[1]-20):
+            self.velocity[0] = -abs(self.velocity[0]*(random.randint(8,25)/10))
         if self.position[1]>500 or self.position[1]<0:
             self.velocity[1] = -self.velocity[1]
 
@@ -74,13 +80,15 @@ class Paddle:
         root.bind('<KeyRelease>',self.stopMove,add='+')
     def startMove(self,event):
         if self.position[1] > 20 and event.keysym == 'Up' and self.input == 'arrows':
-            self.move = -self.speed
+            self.move = -self.speed*ball.speedMultiplier
         if self.position[1] < 480 and event.keysym == 'Down' and self.input == 'arrows':
-            self.move = self.speed
+            self.move = self.speed*ball.speedMultiplier
         if self.position[1] > 20 and event.keysym == 'w' and self.input == 'ws':
-            self.move = -self.speed
+            self.move = -self.speed*ball.speedMultiplier
         if self.position[1] < 480 and event.keysym == 's' and self.input == 'ws':
-            self.move = self.speed
+            self.move = self.speed*ball.speedMultiplier
+        if event.keysym == 'r':
+            ball.speedMultiplier = .3
     def stopMove(self,event):
         if self.position[1] > 20 and event.keysym == 'Up' and self.input == 'arrows':
             self.move = 0
@@ -90,6 +98,8 @@ class Paddle:
             self.move = 0
         if self.position[1] < 480 and event.keysym == 's' and self.input == 'ws':
             self.move = 0
+        if event.keysym == 'r':
+            ball.speedMultiplier = 1
     def movePos(self):
         self.position[1] += self.move
         if self.position[1] < 20:
@@ -114,32 +124,31 @@ class AIPaddle:
         self.score = 0
         self.move = 0
         self.speed = 3
-        self.hitsLeft = 0
         self.hitKind = None
+        self.reactionTimer = time() + .4
     def movePos(self):
-        if self.hitsLeft == 0:
-            distance = (abs(ball.position[0]-self.position[0])//20)*5
-            if distance < 3:
-                distance = 3
+        if self.reactionTimer <= time():
+            self.reactionTimer = time() + .4
+            distance = (abs(ball.position[0]-self.position[0])//30)*5
+            if distance < 5:
+                distance = 5
             if ball.position[1]//distance < self.position[1]//distance:
-                self.hitsLeft += random.randint(1,25)
                 self.hitKind = 'down'
             elif ball.position[1]//distance > self.position[1]//distance:
-                self.hitsLeft += random.randint(1,25)
                 self.hitKind = 'up'
         else:
-            if self.hitKind == 'up':
-                self.position[1] += self.speed
-            else:
-                self.position[1] -= self.speed
-            self.hitsLeft -= 1
+            if self.hitKind == 'up' and not self.position[1] > 480:
+                self.position[1] += self.speed*ball.speedMultiplier
+            elif self.hitKind == 'down' and not self.position[1] < 20:
+                self.position[1] -= self.speed*ball.speedMultiplier
+
     def render(self):
         global start
         canvas.delete(self.paddle)
         canvas.delete(self.scoreText)
         self.paddle = canvas.create_rectangle(self.position[0],self.position[1]+20,self.position[0]-10,self.position[1]-20,fill='white')
         if start:
-            if self.position[0]  > 500:
+            if self.position[0] > 500:
                 self.scoreText = canvas.create_text(self.position[0]-200,50,text=str(self.score),fill='white',font=('TkTextFont',100))
             else:
                 self.scoreText = canvas.create_text(self.position[0]+200,50,text=str(self.score),fill='white',font=('TkTextFont',100))
